@@ -1,0 +1,14 @@
+{
+  "api_token": "YOUR_LINODE_API_TOKEN_HERE",
+  "default_root_password": "SecurePassword123!",
+  "default_region": "us-east",
+  "default_instance_type": "g6-nanode-1",
+  "default_image": "linode/ubuntu22.04",
+  "notification_email": "your-email@example.com",
+  "settings": {
+    "auto_confirm_destructive": false,
+    "show_costs": true,
+    "preferred_regions": ["us-east", "us-west", "eu-west"],
+    "backup_enabled": true
+  }
+}
