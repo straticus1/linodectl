@@ -12,8 +12,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 try:
-    from linode_api4 import LinodeClient, LinodeLoginError
-    from linode_api4.objects import Instance, Domain, NodeBalancer
+    from linode_api4 import LinodeClient, ApiError
+    from linode_api4.objects import Instance
 except ImportError:
     print("Error: linode_api4 not installed. Run: pip install linode_api4")
     sys.exit(1)
@@ -25,10 +25,12 @@ class NerdyLinode:
         self.config = self._load_config(config_file)
         try:
             self.client = LinodeClient(self.config.get('api_token'))
-            # Test the connection
             self.account = self.client.account()
-        except LinodeLoginError:
-            print("Error: Invalid API token. Please check your configuration.")
+        except ApiError as e:
+            if e.status == 401:
+                print("Error: Invalid API token. Please check your configuration.")
+            else:
+                print(f"API error: {e}")
             sys.exit(1)
         except Exception as e:
             print(f"Error connecting to Linode API: {e}")
@@ -163,12 +165,12 @@ class NerdyLinode:
         """List all domains"""
         print("\n=== Domains ===")
         try:
-            domains = self.client.load(Domain).instances()
-            
+            domains = self.client.domains()
+
             if not domains:
                 print("No domains found.")
                 return
-            
+
             for domain in domains:
                 print(f"🌐 {domain.domain}")
                 print(f"   ID: {domain.id}")
@@ -182,12 +184,12 @@ class NerdyLinode:
         """List all NodeBalancers"""
         print("\n=== NodeBalancers ===")
         try:
-            nodebalancers = self.client.load(NodeBalancer).instances()
-            
+            nodebalancers = self.client.nodebalancers()
+
             if not nodebalancers:
                 print("No NodeBalancers found.")
                 return
-            
+
             for nb in nodebalancers:
                 print(f"⚖️  {nb.label}")
                 print(f"   ID: {nb.id}")
@@ -240,7 +242,9 @@ class NerdyLinode:
                 update_fields['last_name'] = kwargs['last_name']
             
             if update_fields:
-                account.save(**update_fields)
+                for field, value in update_fields.items():
+                    setattr(account, field, value)
+                account.save()
                 print("✅ Billing information updated successfully!")
             else:
                 print("No fields provided to update.")
